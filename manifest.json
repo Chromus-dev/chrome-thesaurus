@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "The Saurus",
+  "description": "Simple thesaurus on right click",
+  "version": "1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "the_saurus.png"
+  }
+}
