@@ -1,6 +1,6 @@
-# chrome-thesaurus
+The Saurus
 
-Simple thesaurus extensions for right clicks
+Simple thesaurus extension for right clicks
 
 examples
 https://chrome.google.com/webstore/detail/power-thesaurus/hhnjkanigjoiglnlopahbbjdbfhkndjk
