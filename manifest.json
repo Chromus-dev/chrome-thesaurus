@@ -3,8 +3,11 @@
   "name": "The Saurus",
   "description": "Simple thesaurus on right click",
   "version": "1.0",
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": "the_saurus.png"
+  "permissions": ["contextMenus"]
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icon16.png"
   }
 }
