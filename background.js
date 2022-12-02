@@ -4,7 +4,7 @@ chrome.runtime.onInstalled.addListener(() => {
 	chrome.contextMenus.create(
 		{
 			id: 'showSynonyms',
-			title: 'Show Synonyms',
+			title: 'Synonyms for %s',
 			contexts: ['selection'],
 			type: 'normal',
 			onclick: (clickData) => {
