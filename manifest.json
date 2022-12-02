@@ -1,13 +1,23 @@
 {
-  "manifest_version": 3,
-  "name": "The Saurus",
-  "description": "Simple thesaurus on right click",
-  "version": "1.0",
-  "permissions": ["contextMenus"]
-  "background": {
-    "service_worker": "background.js"
-  },
-  "icons": {
-    "16": "icon16.png"
-  }
+	"manifest_version": 3,
+	"name": "The Saurus",
+	"description": "Simple thesaurus on right click",
+	"version": "1.0",
+	"permissions": ["contextMenus", "clipboardWrite", "search"],
+	"background": {
+		"service_worker": "background.js"
+	},
+	"icons": {
+		"16": "img/icon16.png",
+		"48": "img/icon48.png",
+		"128": "img/icon128.png"
+	},
+	"action": {
+		"default_icon": {
+			"16": "img/icon16.png",
+			"48": "img/icon48.png",
+			"128": "img/icon128.png"
+		},
+		"default_title": "The Saurus"
+	}
 }
