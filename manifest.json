@@ -3,10 +3,23 @@
 	"name": "The Saurus",
 	"description": "Simple thesaurus on right click",
 	"version": "1.0",
-	"permissions": ["contextMenus", "clipboardWrite", "search"],
+	"permissions": [
+		"contextMenus",
+		"clipboardWrite",
+		"search",
+		"scripting",
+		"tabs"
+	],
 	"background": {
 		"service_worker": "background.js"
 	},
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"js": ["contentScript.js"]
+		}
+	],
+	"host_permissions": ["<all_urls>"],
 	"icons": {
 		"16": "img/icon16.png",
 		"48": "img/icon48.png",
