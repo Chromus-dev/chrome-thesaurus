@@ -2,149 +2,114 @@
 
 const SINGLE_WORD_REGEX = /^[A-Za-z]+$/;
 const MAX_RESULTS = 8;
-const PER_TYPE = {
-	1: MAX_RESULTS,
-	2: 4,
-	3: 3,
-	4: 2,
-};
 
-// * implement cache system
-let cache = {
-	selectedWords: [],
-	synonyms: {},
-};
+// version 1 returns an array
+// version 2 returns an object with snys for diff word types
+const API_VERSION = 1;
 
 chrome.runtime.onInstalled.addListener(() => {
-	createMainMenu();
+    createMainParent();
 });
 
 let oldWordTypes = [];
 let lastSelected;
 
 chrome.contextMenus.onClicked.addListener((clickData, tab) => {
-	console.log('uionsdfgiundsfg');
-	if (clickData.menuItemId == 'noun1') {
-		chrome.contextMenus.remove('nouns', () => {
-				// console.log(chrome.contextMenus)
-				if (chrome.runtime.lastError)
-					console.log(chrome.runtime.lastError);
-			})
-	}
+    console.log('uionsdfgiundsfg');
+    if (clickData.menuItemId == 'noun1') {
+        chrome.contextMenus.remove('nouns', () => {
+            // console.log(chrome.contextMenus)
+            if (chrome.runtime.lastError)
+                console.log(chrome.runtime.lastError);
+        })
+    }
 });
 
-chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
-	console.log(msg);
-	if (
-		msg.selection &&
-		SINGLE_WORD_REGEX.test(msg.selection) &&
-		msg.selection !== '' &&
-		msg.selection != lastSelected
-	) {
-		lastSelected = msg.selection
-		
-		// console.log(msg);
-		
-		// get json of thesaurus results
-		const res = await fetch(
-			`https://words.bighugelabs.com/api/2/7b753b239569335bfa21ad7ca313df1a/${msg.selection}/json`
-		).then(r => r.json());
-		createContextMenus(res);
-		console.log(res);
-		
-		/*
-		fetch(
-			`https://words.bighugelabs.com/api/2/7b753b239569335bfa21ad7ca313df1a/${msg.selection}/json`
-		)
-			.then((r) => r.json())
-			.then((json) => {
-				let amountOfTypes = Object.keys(json).length;
+chrome.runtime.onMessage.addListener(async(msg, sender, sendResponse) => {
+    console.log(msg);
+    if (
+        msg.selection &&
+        SINGLE_WORD_REGEX.test(msg.selection) &&
+        msg.selection !== '' &&
+        msg.selection != lastSelected) {
+        lastSelected = msg.selection
 
-				// define i outside of loop because
-				let i = 0;
+            // console.log(msg);
 
-				Object.values(json).forEach((type) => {
-					while (i < PER_TYPE[amountOfTypes]) {
-						let syns = type.syn;
-						synonymsForSelected.push(syns[i]);
-						// console.log(syns);
-						chrome.contextMenus.update(
-							`synonym${i}`,
-							{
-								title: syns[i],
-							},
-							() => {
-								if (chrome.runtime.lastError)
-									console.log(chrome.runtime.lastError);
-							}
-						);
-
-						i++;
-					}
-				});
-
-				lastAmountOfSyns = synonymsForSelected.length;
-			})
-			.then(() => console.log(synonymsForSelected));
-		*/
-	}
+            // get json of thesaurus results
+            const res = await fetch(
+'https://words.bighugelabs.com/api/' + API_VERSION + `/7b753b239569335bfa21ad7ca313df1a/${msg.selection}/json`).then(r => r.json());
+        createContextMenus(res);
+    }
 });
 
-function createContextMenus(res){
-	const types = Object.keys(res);
+function createContextMenus(res) {
+	// remove old menus and recreate main parent 'show synonyms'
+	chrome.contextMenus.removeAll();
+	createMainParent();
 	
-	// remove old menus but keep the ones that are still used
-	oldWordTypes.forEach((oldType) => {
-		if(!types.includes(oldType))
-			chrome.contextMenus.remove(oldType, () => {
-				if (chrome.runtime.lastError)
-					console.log(chrome.runtime.lastError);
-			})
-	});
+	console.log('res', res)
 	
-	console.log(types)
-	
-	types.forEach((type) => {
+    // sometimes res will be an array of synonyms instead of an object
+    // example word that uses an array: 'answer'
+    if (Array.isArray(res)) {
+		// remove old menus and recreate main parent 'show synonyms'
+		chrome.contextMenus.removeAll();
+		createMainParent();
 		
-		console.log(type)
-		
-		if(!oldWordTypes.includes(type)) oldWordTypes.push(type)
-			
-		// create parent menu
-		chrome.contextMenus.create({
-			id: type,
-			// capitalize first letter and add 's' to the end
-			title: type.charAt(0).toUpperCase() + type.slice(1) + 's',
-			contexts: ['selection'],
-			type: 'normal',
-			parentId: 'showSynonyms'
-		})
-		
-		let i = 0;
-		while(res[type].syn.length > i || i < MAX_RESULTS){
+        // create menus with first values up to MAX_RESULTS or length of results
+		for(let i = 0; i < Math.min(res.length, MAX_RESULTS); i++){
 			chrome.contextMenus.create({
-				id: `syn${res[type].syn[i]}`,
-				title: res[type].syn[i],
+				id: `syn${res[i]}`,
+				title: res[i],
 				contexts: ['selection'],
-				type: 'normal',
-				parentId: type
+                type: 'normal',
+                parentId: 'showSynonyms'
 			})
 		}
-	})
+    } else {
+        // otherwise it's an object
+        const types = Object.keys(res);
+
+        console.log(types)
+        types.forEach((type) => {
+            console.log(type)
+                // create parent menu
+                chrome.contextMenus.create({
+                    id: type,
+                    // capitalize first letter and add 's' to the end
+                    title: type.charAt(0).toUpperCase() + type.slice(1) + 's',
+                    contexts: ['selection'],
+                    type: 'normal',
+                    parentId: 'showSynonyms'
+                })
+
+            let i = 0;
+            while (res[type].syn.length > i || i > MAX_RSEULTS) {
+                chrome.contextMenus.create({
+                    id: `syn${res[type].syn[i]}`,
+                    title: res[type].syn[i],
+                    contexts: ['selection'],
+                    type: 'normal',
+                    parentId: type
+                });
+				i++;
+            }
+        })
+    }
 }
 
-function createMainMenu() {
-	// parent menu
-	chrome.contextMenus.create(
-		{
-			id: 'showSynonyms',
-			title: "Synonyms for '%s'",
-			contexts: ['selection'],
-			type: 'normal',
-		},
-		() => {
-			// console.log(chrome.contextMenus)
-			if (chrome.runtime.lastError) console.log(chrome.runtime.lastError);
-		}
-	);
+function createMainParent() {
+    // parent menu
+    chrome.contextMenus.create({
+        id: 'showSynonyms',
+        title: "Synonyms for '%s'",
+        contexts: ['selection'],
+        type: 'normal',
+    },
+        () => {
+        // console.log(chrome.contextMenus)
+        if (chrome.runtime.lastError)
+            console.log(chrome.runtime.lastError);
+    });
 }
