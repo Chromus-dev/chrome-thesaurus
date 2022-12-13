@@ -27,29 +27,38 @@ chrome.contextMenus.onClicked.addListener((clickData, tab) => {
 		});
 	}
 	if (SYNONYM_ID_REGEX.test(clickData.menuItemId)) {
-		// search thesarus.com for that synonym
-		chrome.tabs.create({
-			url: new URL(
-				'https://www.thesaurus.com/browse/' +
-					clickData.menuItemId.replace(SYNONYM_ID_REGEX, '')
-			).toString(),
-			active: true,
-		});
+		// copy synonym to clipboard
+		chrome.runtime.sendMessage({
+			name: 'copyToClipboard',
+			data: clickData.menuItemId.replace(SYNONYM_ID_REGEX, '')
+		})
+
+		// // search thesarus.com for that synonym
+		// chrome.tabs.create({
+		// 	url: new URL(
+		// 		'https://www.thesaurus.com/browse/' +
+		// 			clickData.menuItemId.replace(SYNONYM_ID_REGEX, '')
+		// 	).toString(),
+		// 	active: true,
+		// });
 	}
 });
 
-chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (msg) => {
 	console.log(msg);
 	if (
-		msg.selection &&
-		SINGLE_WORD_REGEX.test(msg.selection) &&
-		msg.selection !== '' &&
-		msg.selection != lastSelected
+		msg.name === 'selectionUpdated' &&
+		SINGLE_WORD_REGEX.test(msg.data) &&
+		msg.data !== '' &&
+		msg.data != lastSelected
 	) {
-		const selection = pluralize.singular(msg.selection);
+		const selection = pluralize.singular(msg.data);
 		lastSelected = selection;
 
 		// console.log(msg);
+
+		// ! scrape thesaurus.com
+		// https://bretcameron.medium.com/how-to-build-a-web-scraper-using-javascript-11d7cd9f77f2
 
 		// get json of thesaurus results
 		try {
