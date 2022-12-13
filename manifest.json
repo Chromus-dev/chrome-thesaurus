@@ -2,13 +2,13 @@
 	"manifest_version": 3,
 	"name": "The Saurus",
 	"description": "Simple thesaurus on right click",
+	"default_locale": "en",
 	"version": "1.0",
+	"author": "Chase",
 	"permissions": [
 		"contextMenus",
-		"clipboardWrite",
-		"search",
 		"scripting",
-		"tabs"
+		"clipboardWrite"
 	],
 	"background": {
 		"service_worker": "background.js"
