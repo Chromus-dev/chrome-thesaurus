@@ -6,10 +6,6 @@ const SINGLE_WORD_REGEX = /^[A-Za-z]+$/;
 const SYNONYM_ID_REGEX = /^syn[0-9]+_/;
 const MAX_RESULTS = 8;
 
-// version 1 returns an array
-// version 2 returns an object with snys for diff word types
-const API_VERSION = 1;
-
 chrome.runtime.onInstalled.addListener(() => {
 	createMainParent();
 });
@@ -30,8 +26,8 @@ chrome.contextMenus.onClicked.addListener((clickData, tab) => {
 		// copy synonym to clipboard
 		chrome.runtime.sendMessage({
 			name: 'copyToClipboard',
-			data: clickData.menuItemId.replace(SYNONYM_ID_REGEX, '')
-		})
+			data: clickData.menuItemId.replace(SYNONYM_ID_REGEX, ''),
+		});
 
 		// // search thesarus.com for that synonym
 		// chrome.tabs.create({
@@ -61,89 +57,45 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 		// https://bretcameron.medium.com/how-to-build-a-web-scraper-using-javascript-11d7cd9f77f2
 
 		// get json of thesaurus results
-		try {
-			const res = await fetch(
-				'https://words.bighugelabs.com/api/' +
-					API_VERSION +
-					`/7b753b239569335bfa21ad7ca313df1a/${selection}/json`
-			);
-			createContextMenus(await res.json());
-		} catch (error) {
-			// if no synonyms were found
-			if (error.message === 'Unexpected end of JSON input') {
-				chrome.contextMenus.removeAll();
-				createMainParent();
-				chrome.contextMenus.create({
-					id: `noneFound`,
-					title: 'No synonyms found',
-					contexts: ['selection'],
-					type: 'normal',
-					parentId: 'showSynonyms',
-				});
+		const res = await fetch(
+			`https://api.api-ninjas.com/v1/thesaurus?word=${selection}`,
+			{
+				headers: {
+					'X-Api-Key': '8Q5J82oAhBFxivmvXETccA==1it0xhDJBt6Pq81W',
+				},
 			}
-		}
+		);
+		createContextMenus(await res.json());
 	}
 });
 
 function createContextMenus(res) {
+	console.log('res', res);
+
 	// remove old menus and recreate main parent 'show synonyms'
 	chrome.contextMenus.removeAll();
 	createMainParent();
 
-	console.log('res', res);
+	// no synonyms found for that word
+	if (res.synonyms.length === 0) {
+		chrome.contextMenus.create({
+			id: `noneFound`,
+			title: 'No synonyms found',
+			contexts: ['selection'],
+			type: 'normal',
+			parentId: 'showSynonyms',
+		});
+		return;
+	}
 
-	// sometimes res will be an array of synonyms instead of an object
-	// example word that uses an array: 'answer'
-	if (Array.isArray(res)) {
-		// remove old menus and recreate main parent 'show synonyms'
-		chrome.contextMenus.removeAll();
-		createMainParent();
-
-		// create menus with first values up to MAX_RESULTS or length of results
-		for (let i = 0; i < Math.min(res.length, MAX_RESULTS); i++) {
-			chrome.contextMenus.create({
-				id: `syn${i}_${res[i]}`,
-				title: res[i],
-				contexts: ['selection'],
-				type: 'normal',
-				parentId: 'showSynonyms',
-			});
-		}
-	} else {
-		// otherwise it's an object
-		const types = Object.keys(res);
-
-		console.log(types);
-		types.forEach((type) => {
-			console.log(type);
-
-			let parentMenu = types.length == 1 ? 'showSynonyms' : type;
-
-			// create parent menu
-			if (parentMenu == type)
-				chrome.contextMenus.create({
-					id: type,
-					// capitalize first letter and add 's' to the end
-					title: type.charAt(0).toUpperCase() + type.slice(1) + 's',
-					contexts: ['selection'],
-					type: 'normal',
-					parentId: 'showSynonyms',
-				});
-
-			let i = 0;
-			let syns = res[type].syn || res[type].sim;
-			console.log(syns);
-			// keep adding until we're out of results or we reach MAX_RESULTS
-			while (syns.length > i && i < MAX_RESULTS) {
-				chrome.contextMenus.create({
-					id: `syn${i}_${syns[i]}`,
-					title: syns[i],
-					contexts: ['selection'],
-					type: 'normal',
-					parentId: parentMenu,
-				});
-				i++;
-			}
+	// create menus with first values up to MAX_RESULTS or length of results
+	for (let i = 0; i < Math.min(res.synonyms.length, MAX_RESULTS); i++) {
+		chrome.contextMenus.create({
+			id: `syn${i}_${res.synonyms[i]}`,
+			title: res.synonyms[i],
+			contexts: ['selection'],
+			type: 'normal',
+			parentId: 'showSynonyms',
 		});
 	}
 
