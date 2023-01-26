@@ -92,7 +92,8 @@ function createContextMenus(res) {
 	for (let i = 0; i < Math.min(res.synonyms.length, MAX_RESULTS); i++) {
 		chrome.contextMenus.create({
 			id: `syn${i}_${res.synonyms[i]}`,
-			title: res.synonyms[i],
+			// will contain an underscore inplace of a space
+			title: res.synonyms[i].replace('_', ' '),
 			contexts: ['selection'],
 			type: 'normal',
 			parentId: 'showSynonyms',

@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "The Saurus",
 	"description": "Simple thesaurus on right click",
-	"version": "2.0",
+	"version": "2.0.1",
 	"author": "Chase",
 	"permissions": ["contextMenus", "scripting", "clipboardWrite"],
 	"background": {
